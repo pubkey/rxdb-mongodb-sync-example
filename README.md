@@ -2,10 +2,17 @@
 
 Example Repo that runs the RxDB-MongoDB Replication.
 
+## Architecture
+
+This repository spawns a docker container with MongoDB, an instance of [RxServer](https://rxdb.info/rx-server.html) and a frontend app with a simple todo-list.
+
+![MongoDB RxServer Sync](./files/archi.png "MongoDB RxServer Sync")
+
 ## Prerequisites
 
 - Ensure you have installed Docker
 - Ensure you have installed Node.js in version 22 or newer
+
 
 
 ## Starting this Project
