@@ -1,0 +1,53 @@
+{
+    "name": "rxdb-mongodb-sync-example",
+    "version": "0.0.0",
+    "description": "Example Repo that runs the RxDB-MongoDB Replication",
+    "private": true,
+    "scripts": {
+        "mongodb:start": "docker run -p 27017:27017 -p 27018:27018 -p 27019:27019 --rm --name rxdb-mongodb mongo:8.0.4 mongod --replSet rs0 --bind_ip_all",
+        "mongodb:stop": "docker rm -f rxdb-mongodb",
+        "mongodb:init": "node src/mongodb-connection-tester.js",
+        "frontend": "webpack serve",
+        "rx-server": "tsx src/rx-server.ts"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/pubkey/rxdb-mongodb-sync-example.git"
+    },
+    "keywords": [
+        "rxdb"
+    ],
+    "author": "pubkey",
+    "license": "Apache-2.0",
+    "bugs": {
+        "url": "https://github.com/pubkey/rxdb-mongodb-sync-example/issues"
+    },
+    "homepage": "https://github.com/pubkey/rxdb-mongodb-sync-example#readme",
+    "dependencies": {
+        "express": "5.1.0",
+        "rxdb": "16.17.2",
+        "rxdb-server": "16.17.2",
+        "rxjs": "7.8.2",
+        "todomvc-app-css": "2.4.3",
+        "tsx": "4.20.4"
+    },
+    "devDependencies": {
+        "@types/node": "22.17.2",
+        "@types/webpack": "5.28.5",
+        "clean-webpack-plugin": "4.0.0",
+        "copy-webpack-plugin": "13.0.1",
+        "cross-env": "10.0.0",
+        "css-loader": "7.1.2",
+        "declaration-bundler-webpack-plugin": "1.0.3",
+        "html-webpack-plugin": "5.6.4",
+        "mini-css-extract-plugin": "2.9.4",
+        "process": "0.11.10",
+        "rimraf": "6.0.1",
+        "ts-loader": "9.5.2",
+        "typescript": "5.9.2",
+        "webpack": "5.101.2",
+        "webpack-bundle-analyzer": "4.10.2",
+        "webpack-cli": "6.0.1",
+        "webpack-dev-server": "5.2.2"
+    }
+}
