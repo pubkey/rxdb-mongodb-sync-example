@@ -1,6 +1,7 @@
 const {
     MongoClient
 } = require('mongodb');
+const { CONFIG } = require('../config.js');
 
 /**
  * This file connects to the mongoDB database
@@ -9,9 +10,8 @@ const {
  * the database containers to start up.
  */
 async function run() {
-    console.log('MongoDB Tester: start');
-    const dbName = 'mydb2';
-    const mongoClient = new MongoClient('mongodb://localhost:27017/?directConnection=true');
+    console.log('MongoDB Tester: start ' + CONFIG.mongodb.connection);
+    const mongoClient = new MongoClient(CONFIG.mongodb.connection);
     console.log('MongoDB Tester: created client');
     await mongoClient.connect();
     console.log('MongoDB Tester: client connected');
@@ -48,9 +48,9 @@ async function run() {
 
 
 
-    const mongoDatabase = mongoClient.db(dbName);
+    const mongoDatabase = mongoClient.db(CONFIG.mongodb.databaseName);
     console.log('MongoDB Tester: db connected');
-    const mongoCollection = await mongoDatabase.createCollection('mycollection', {
+    const mongoCollection = await mongoDatabase.createCollection(CONFIG.mongodb.collectionName, {
         changeStreamPreAndPostImages: { enabled: true }
     });
     console.log('MongoDB Tester: created collection');

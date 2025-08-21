@@ -7,20 +7,18 @@ import { MongoClient } from 'mongodb';
 import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { TODO_SCHEMA } from './schema';
+import { CONFIG } from '../config';
 
-
-const databaseName = 'mydb2';
-const collectionName = 'mycollection';
 
 async function start() {
     addRxPlugin(RxDBDevModePlugin);
     const storage = wrappedValidateAjvStorage({ storage: getRxStorageMemory() });
     console.log('START 0');
 
-    const mongoClient = new MongoClient('mongodb://localhost:27017/?directConnection=true');
-    const mongoDatabase = mongoClient.db(databaseName);
+    const mongoClient = new MongoClient(CONFIG.mongodb.connection);
+    const mongoDatabase = mongoClient.db(CONFIG.mongodb.databaseName);
     console.log('START 0.1');
-    const mongoCollection = await mongoDatabase.createCollection(collectionName, {
+    const mongoCollection = await mongoDatabase.createCollection(CONFIG.mongodb.collectionName, {
         changeStreamPreAndPostImages: { enabled: true }
     });
     console.log('START 0.2');
@@ -44,9 +42,9 @@ async function start() {
 
     const replicationState = replicateMongoDB({
         mongodb: {
-            connection: 'mongodb://localhost:27017/?directConnection=true',
-            databaseName: databaseName,
-            collectionName: collectionName,
+            connection: CONFIG.mongodb.connection,
+            databaseName: CONFIG.mongodb.databaseName,
+            collectionName: CONFIG.mongodb.collectionName,
         },
         collection: db.todos,
         replicationIdentifier: 'todos-mongodb-sync',
