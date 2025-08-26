@@ -8,7 +8,8 @@ import {
     deepEqual,
     RxConflictHandler,
     RXDB_VERSION,
-    RxStorage
+    RxStorage,
+    defaultConflictHandler
 } from 'rxdb/plugins/core';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { TODO_SCHEMA, TodoDocType } from './schema.js';
@@ -42,25 +43,9 @@ export const databasePromise = (async () => {
         storage
     });
 
-    // handle replication conflicts (keep the document with the newest timestamp)
-    const conflictHandler: RxConflictHandler<TodoDocType> = {
-        isEqual(a, b) {
-            return deepEqual(
-                a,
-                b
-            );
-        },
-        resolve(input) {
-            const ret = input.newDocumentState.lastChange > input.realMasterState.lastChange
-                ? input.newDocumentState
-                : input.realMasterState;
-            return Promise.resolve(ret);
-        }
-    };
     await database.addCollections({
         todos: {
-            schema: TODO_SCHEMA,
-            conflictHandler
+            schema: TODO_SCHEMA
         }
     });
     database.todos.preSave(d => {
