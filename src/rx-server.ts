@@ -1,5 +1,14 @@
-import { createRxDatabase, addRxPlugin } from 'rxdb';
+import {
+    createRxDatabase,
+    addRxPlugin,
+    defaultConflictHandler,
+    prepareQuery
+} from 'rxdb';
 import { getRxStorageMemory } from 'rxdb/plugins/storage-memory';
+import {
+    getRxStorageSQLiteTrial,
+    getSQLiteBasicsNodeNative
+} from 'rxdb/plugins/storage-sqlite';
 import { replicateMongoDB } from 'rxdb/plugins/replication-mongodb';
 import { createRxServer } from 'rxdb-server/plugins/server';
 import { RxServerAdapterExpress } from 'rxdb-server/plugins/adapter-express';
@@ -8,11 +17,16 @@ import { wrappedValidateAjvStorage } from 'rxdb/plugins/validate-ajv';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { TODO_SCHEMA } from './schema';
 import { CONFIG } from '../config';
+import { DatabaseSync } from 'node:sqlite';
 
 
 async function start() {
     addRxPlugin(RxDBDevModePlugin);
-    const storage = wrappedValidateAjvStorage({ storage: getRxStorageMemory() });
+    const storage = wrappedValidateAjvStorage({
+        storage: getRxStorageSQLiteTrial({
+            sqliteBasics: getSQLiteBasicsNodeNative(DatabaseSync)
+        })
+    });
     console.log('START 0');
 
     const mongoClient = new MongoClient(CONFIG.mongodb.connection);
@@ -33,7 +47,22 @@ async function start() {
     // Add your collection schema
     await db.addCollections({
         todos: {
-            schema: TODO_SCHEMA
+            schema: TODO_SCHEMA,
+            conflictHandler: {
+                isEqual: (a, b, c) => {
+                    const ret = defaultConflictHandler.isEqual(a, b, c);
+                    console.log('isEqul::::');
+                    console.log(JSON.stringify({
+                        a, b, c, ret
+                    }, null, 4));
+                    return ret;
+                },
+                resolve: async (i, c) => {
+                    const ret = await defaultConflictHandler.resolve(i, c);
+                    console.log(JSON.stringify({ ret, i, c }));
+                    return ret;
+                }
+            }
         }
     });
 
@@ -51,16 +80,16 @@ async function start() {
         pull: {
             batchSize: 50,
             modifier: d => {
-                console.log('pulling');
-                console.dir(d);
+                // console.log('pulling');
+                // console.dir(d);
                 return d;
             }
         },
         push: {
             batchSize: 50,
             modifier: d => {
-                console.log('pushing');
-                console.dir(d);
+                // console.log('pushing');
+                // console.dir(d);
                 return d;
             }
         },
@@ -75,6 +104,7 @@ async function start() {
     await replicationState.awaitInSync();
     console.log('START 3');
 
+    await logStates();
 
     const server = await createRxServer({
         database: db,
@@ -99,21 +129,47 @@ async function start() {
 
 
     setInterval(async () => {
-        const docs = await mongoCollection.find().toArray();
-        console.log('show server state:');
-        console.dir(docs);
+        await logStates();
     }, 2000);
 
 
+
+
+
     setInterval(async () => {
-        console.log('insertOne:');
-        await mongoCollection.insertOne({
-            id: 'auto_' + Date.now(),
-            name: 'server created todo at ' + new Date().toLocaleString(),
-            state: 'open',
-            lastChange: Date.now()
-        });
+        // console.log('insertOne:');
+        // await mongoCollection.insertOne({
+        //     id: 'auto_' + Date.now(),
+        //     name: 'server created todo at ' + new Date().toLocaleString(),
+        //     state: 'open',
+        //     lastChange: Date.now()
+        // });
     }, 15000);
+
+
+    async function logStates() {
+
+        const [mongoCloudDocs, rxServerdocs] = await Promise.all([
+            await mongoCollection.find().toArray(),
+            db.todos.storageInstance.query(prepareQuery(
+                db.todos.storageInstance.schema,
+                {
+                    selector: {},
+                    skip: 0,
+                    sort: [{ [db.todos.schema.primaryPath]: 'asc' }]
+                }
+            ))
+        ]);
+
+        console.log('STATE:');
+        console.log(JSON.stringify({
+            mongoCloudDocs,
+            rxServerdocs
+        }, null, 4));
+    }
+
 
 }
 start();
+
+
